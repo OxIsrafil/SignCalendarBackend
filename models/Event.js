@@ -5,8 +5,8 @@ const eventSchema = new mongoose.Schema({
   description: String,
   location: String,
   date: { type: String, required: true }, // Format: YYYY-MM-DD
-  time: { type: String, required: true },  // Format: HH:mm
-  approved: { type: Boolean, default: false }, // ✅ new
+  time: { type: String, required: true }, // Format: HH:mm
+  approved: { type: Boolean, default: false },
 });
 
 module.exports = mongoose.model('Event', eventSchema);
