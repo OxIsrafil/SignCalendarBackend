@@ -1,48 +1,50 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const Event = require('../models/Event');
-const generateICS = require('../utils/icsGenerator');
+const Event = require("../models/Event");
 
-// Get all events
-router.get('/', async (req, res) => {
+// GET only approved events (public)
+router.get("/", async (req, res) => {
+  const events = await Event.find({ approved: true }).sort({ date: 1 });
+  res.json(events);
+});
+
+// GET all events (admin)
+router.get("/all", async (req, res) => {
+  const events = await Event.find().sort({ date: 1 });
+  res.json(events);
+});
+
+// POST new event (default approved = false)
+router.post("/", async (req, res) => {
+  const { date, time } = req.body;
+  const existing = await Event.findOne({ date, time });
+
+  if (existing) {
+    return res.status(409).json({ message: "Clash" });
+  }
+
+  const event = new Event(req.body);
+  await event.save();
+  res.status(201).json(event);
+});
+
+// PATCH approve event (admin)
+router.patch("/:id/approve", async (req, res) => {
   try {
-    const events = await Event.find({});
-    res.json(events);
-  } catch (error) {
-    res.status(500).json({ message: 'Server error' });
+    const updated = await Event.findByIdAndUpdate(req.params.id, { approved: true }, { new: true });
+    res.json(updated);
+  } catch (err) {
+    res.status(400).json({ error: "Approve failed" });
   }
 });
 
-// Create new event (with clash detection)
-router.post('/', async (req, res) => {
+// DELETE event (admin)
+router.delete("/:id", async (req, res) => {
   try {
-    const { title, description, location, date, time } = req.body;
-
-    const conflict = await Event.findOne({ date, time });
-    if (conflict) {
-      return res.status(409).json({ message: 'Event clash detected' });
-    }
-
-    const newEvent = new Event({ title, description, location, date, time });
-    await newEvent.save();
-    res.status(201).json(newEvent);
-  } catch (error) {
-    res.status(500).json({ message: 'Error creating event' });
-  }
-});
-
-// Download event as .ics
-router.get('/:id/download', async (req, res) => {
-  try {
-    const event = await Event.findById(req.params.id);
-    if (!event) return res.status(404).json({ message: 'Event not found' });
-
-    const ics = generateICS(event);
-    res.setHeader('Content-Disposition', 'attachment; filename=event.ics');
-    res.setHeader('Content-Type', 'text/calendar');
-    res.send(ics);
-  } catch (error) {
-    res.status(500).json({ message: 'Error downloading .ics file' });
+    await Event.findByIdAndDelete(req.params.id);
+    res.json({ message: "Deleted" });
+  } catch (err) {
+    res.status(400).json({ error: "Delete failed" });
   }
 });
 
