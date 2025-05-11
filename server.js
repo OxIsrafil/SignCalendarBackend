@@ -8,7 +8,7 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middlewares
+// Middleware
 app.use(cors());
 app.use(express.json());
 
@@ -19,15 +19,22 @@ mongoose
     useUnifiedTopology: true,
   })
   .then(() => console.log("✅ MongoDB connected"))
-  .catch((err) => console.error("❌ MongoDB connection failed:", err));
+  .catch((err) => {
+    console.error("❌ MongoDB connection failed:", err.message);
+    process.exit(1); // exit if DB fails
+  });
 
 // Routes
-const eventRoutes = require("./routes/events");
-app.use("/api/events", eventRoutes);
+app.use("/api/events", require("./routes/events"));
 
-// Root check
+// Health check route
 app.get("/", (req, res) => {
-  res.send("🚀 Sign Scheduler Backend is Running!");
+  res.status(200).send("🚀 Sign Scheduler Backend is Live!");
+});
+
+// Handle 404 for unknown API routes
+app.use((req, res) => {
+  res.status(404).json({ error: "Not found" });
 });
 
 // Start server
