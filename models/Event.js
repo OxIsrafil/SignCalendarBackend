@@ -7,6 +7,7 @@ const eventSchema = new mongoose.Schema({
   date: { type: String, required: true }, // Format: YYYY-MM-DD
   time: { type: String, required: true }, // Format: HH:mm
   approved: { type: Boolean, default: false },
+  hostName: String, // New field
 });
 
 module.exports = mongoose.model('Event', eventSchema);
