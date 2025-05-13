@@ -43,7 +43,7 @@ router.get("/all", async (req, res) => {
 // Submit event
 router.post("/", async (req, res) => {
   try {
-    const { title, date, time } = req.body;
+    const { title, date, time, host } = req.body;
     if (!title || !date || !time) {
       return res.status(400).json({ error: "Missing required fields." });
     }
@@ -53,9 +53,12 @@ router.post("/", async (req, res) => {
       return res.status(409).json({ error: "An event already exists at this time." });
     }
 
-    const newEvent = new Event(req.body);
-    await newEvent.save();
+    const newEvent = new Event({
+      ...req.body,
+      hostName: host  // 🔥 Map "host" from form to hostName field in DB
+    });
 
+    await newEvent.save();
     res.status(201).json({ message: "Event submitted for approval." });
   } catch (err) {
     console.error("❌ Event submission failed:", err);
